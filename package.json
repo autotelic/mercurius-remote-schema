@@ -30,14 +30,19 @@
   },
   "homepage": "https://github.com/autotelic/mercurius-remote-schema#readme",
   "dependencies": {
+    "@graphql-tools/stitch": "^7.5.2",
+    "@graphql-tools/wrap": "^7.0.8",
     "fastify-plugin": "^3.0.0"
   },
   "devDependencies": {
-    "tap": "^15.0.6",
-    "fastify": "^3.0.0",
+    "fastify": "^3.15.1",
     "fastify-cli": "^2.5.1",
+    "got": "^11.8.2",
+    "graphql": "^15.5.0",
+    "lint-staged": "^10.2.11",
+    "mercurius": "^7.6.0",
     "standard": "^16.0.3",
-    "lint-staged": "^10.2.11"
+    "tap": "^15.0.6"
   },
   "lint-staged": {
     "*.{js,jsx}": [
