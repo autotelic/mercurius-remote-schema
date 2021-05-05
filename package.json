@@ -1,6 +1,6 @@
 {
   "name": "@autotelic/mercurius-remote-schema",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A plugin for fetching and stitching remote schemas with mercurius",
   "main": "index.js",
   "directories": {
