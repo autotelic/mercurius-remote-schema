@@ -1,24 +1,64 @@
-# fastify-plugin-example
+# mercurius-remote-schema
 
-Fastify plugin template.
+A plugin for using remote schemas with [Mercurius](https://mercurius.dev).
 
-## Github Actions/Workflows
+## Usage
 
-#### Getting Started
+```sh
+npm i @autotelic/mercurius-remote-schema
+```
+#### Example
 
-* Create release and test workflows
-  ```sh
-  cd .github/workflows
-  cp release.yml.example release.yml
-  cp test.yml.example test.yml
-  ```
-* Update `release.yml` and `test.yml` with appropriate workflow for your plugin
+```js
+const remoteSchema = require('@autotelic/mercurius-remote-schema')
 
-#### Triggering a Release
+function myPlugin (fastify, opts) {
+  // Create an [executor](https://www.graphql-tools.com/docs/remote-schemas/#creating-an-executor) for interacting with the remote schema.
+  const createExecutor = (url) => async ({ document, variables }) => {
+    const query = print(document);
+    const { body } = await got.post(url, {
+      json: { query, variables },
+      responseType: 'json'
+    });
+    return body
+  };
 
-* Trigger the release workflow via release tag
-  ```sh
-  git checkout main && git pull
-  npm version { minor | major | path }
-  git push --follow-tags
-  ```
+  const executor = createExecutor('http://example.com/graphql')
+
+  // Introspect the remote schema and stitch it together with the existing mercurius
+  // service schema.
+  fastify.register(remoteSchema, {
+    subschemas: [{ executor }]
+  })
+  // Once the remote schema plugin has been loaded, you may also use the graphql.
+  // addRemoteSchemas decorator.
+  fastify.graphql.addRemoteSchemas([{ someOtherRemoteSchemaExecutor }])
+```
+
+## API
+
+### Plugin `options`
+
+mercurius-remote-schema accepts the following *optional* configuration:
+
+ - #### `subschemas`
+
+   - An array of subschema [configuration objects](https://www.graphql-tools.com/docs/remote-schemas#wrapschemaschemaconfig)
+
+      | field | description | required |
+      |-------|-------------|----------|
+      | executor | A graphql remote schema [executor](https://www.graphql-tools.com/docs/remote-schemas/#creating-an-executor) | yes |
+      |transforms| An array of graphql [transforms](https://www.graphql-tools.com/docs/schema-wrapping/#built-in-transforms) | no |
+      | subscriber | A graphql [subscriber](https://www.graphql-tools.com/docs/remote-schemas#creating-a-subscriber) | no |
+
+ - #### `stitchSchemaOpts`
+   - Options object to be passed to [stitchSchemas](https://www.graphql-tools.com/docs/stitch-api#stitchschemas)
+
+### Decorator `addRemoteSchemas`
+
+`mercurius-remote-schema` adds a `fastify.graphql.addRemoteSchemas` decorator to allow
+adding additional remote schemas after plugin initialization. It accepts the following
+arguments.
+
+- #### `subschemas`:
+  - An array of subschema configuration objects.
