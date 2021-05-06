@@ -6,9 +6,16 @@ const { stitchSchemas } = require('@graphql-tools/stitch')
 
 async function mercuriusRemoteSchema (fastify, options) {
   const {
+    schema: baseServiceSchema,
+    replaceSchema
+  } = fastify.graphql
+
+  const {
     subschemas = [],
     stitchSchemaOpts = {}
   } = options
+
+  const remoteSubschemas = subschemas
 
   async function createSubschema (subschemaConfig) {
     // TODO(jkirkpatrick24): Enforce existence of an executor.
@@ -21,21 +28,30 @@ async function mercuriusRemoteSchema (fastify, options) {
     }
   }
 
-  async function addRemoteSchemas (subschemaConfigs) {
-    const { schema, replaceSchema } = fastify.graphql
-    const subschemas = await Promise.all(subschemaConfigs.map(createSubschema))
+  async function buildSchema () {
+    const subschemas = await Promise.all(remoteSubschemas.map(createSubschema))
 
     replaceSchema(stitchSchemas({
       ...stitchSchemaOpts,
-      subschemas: [...subschemas, schema]
+      subschemas: [...subschemas, baseServiceSchema]
     }))
   }
 
-  if (subschemas.length > 0) {
-    await addRemoteSchemas(subschemas)
+  async function addRemoteSchemas (subschemaConfigs) {
+    subschemaConfigs.forEach(config => remoteSubschemas.push(config))
+    await buildSchema()
+  }
+
+  async function refreshRemoteSchemas () {
+    await buildSchema()
+  }
+
+  if (remoteSubschemas.length > 0) {
+    await buildSchema()
   }
 
   fastify.graphql.addRemoteSchemas = addRemoteSchemas
+  fastify.graphql.refreshRemoteSchemas = refreshRemoteSchemas
 }
 
 module.exports = fp(mercuriusRemoteSchema, {

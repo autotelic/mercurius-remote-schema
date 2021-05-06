@@ -152,3 +152,69 @@ test('"plugin" - Supports transforms at the subschema level', async (t) => {
 
   t.same(actual, expected)
 })
+
+test('"refreshRemoteSchemas" refreshes the remote schemas', async (t) => {
+  const [remoteService, remoteServicePort] = await createRemoteService()
+  t.teardown(async () => {
+    if (remoteService && remoteService.close) {
+      await remoteService.close()
+    }
+    await gql.close()
+    await updatedRemoteService.close()
+  })
+  const executor = createTestExecutor(remoteServicePort)
+  const gql = createBaseGQLService()
+
+  gql.register(plugin, {
+    subschemas: [{ executor }]
+  })
+
+  await gql.ready()
+
+  const actual = await gql.inject.query(`{
+    add(x: 1, y: 3)
+    subtract(x: 4, y: 3)
+  }`)
+
+  const expected = {
+    data: {
+      add: 4,
+      subtract: 1
+    }
+  }
+
+  t.same(actual, expected)
+  await remoteService.close()
+  const testSchema = `
+    type Query {
+      divide(x: Int, y: Int): Int
+    }
+  `
+
+  const testResolvers = {
+    Query: {
+      divide: async (_, { x, y }) => x / y
+    }
+  }
+  const [updatedRemoteService] = await createRemoteService(
+    testSchema,
+    testResolvers,
+    remoteServicePort
+  )
+
+  await gql.graphql.refreshRemoteSchemas()
+
+  const actual2 = await gql.inject.query(`{
+    divide(x: 4, y: 2)
+    subtract(x: 4, y: 3)
+  }`)
+
+  const expected2 = {
+    data: {
+      divide: 2,
+      subtract: 1
+    }
+  }
+
+  t.same(actual2, expected2)
+})
