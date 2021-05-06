@@ -29,7 +29,7 @@ const testResolvers2 = {
   }
 }
 
-async function createRemoteService (schema = testSchema, resolvers = testResolvers) {
+async function createRemoteService (schema = testSchema, resolvers = testResolvers, port = 0) {
   const service = Fastify()
 
   service.register(mercurius, {
@@ -37,7 +37,7 @@ async function createRemoteService (schema = testSchema, resolvers = testResolve
     resolvers
   })
 
-  await service.listen(0)
+  await service.listen(port)
   return [service, service.server.address().port]
 }
 
