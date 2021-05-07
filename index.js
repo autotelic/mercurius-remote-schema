@@ -11,8 +11,9 @@ async function mercuriusRemoteSchema (fastify, options) {
   } = fastify.graphql
 
   const {
-    subschemas = [],
-    stitchSchemaOpts = {}
+    pollingInterval = null,
+    stitchSchemaOpts = {},
+    subschemas = []
   } = options
 
   const remoteSubschemas = subschemas
@@ -50,8 +51,31 @@ async function mercuriusRemoteSchema (fastify, options) {
     await buildSchema()
   }
 
+  let intervalId
+  function autoRefreshRemoteSchemas (interval = pollingInterval) {
+    stopAutoRefreshRemoteSchemas()
+    intervalId = setTimeout(async () => {
+      await buildSchema()
+      intervalId = null
+      autoRefreshRemoteSchemas(interval)
+    }, interval)
+  }
+
+  function stopAutoRefreshRemoteSchemas () {
+    if (intervalId !== null) {
+      clearInterval(intervalId)
+      intervalId = null
+    }
+  }
+
+  if (pollingInterval !== null) {
+    autoRefreshRemoteSchemas()
+  }
+
   fastify.graphql.addRemoteSchemas = addRemoteSchemas
   fastify.graphql.refreshRemoteSchemas = refreshRemoteSchemas
+  fastify.graphql.autoRefreshRemoteSchemas = autoRefreshRemoteSchemas
+  fastify.graphql.stopAutoRefreshRemoteSchemas = stopAutoRefreshRemoteSchemas
 }
 
 module.exports = fp(mercuriusRemoteSchema, {
