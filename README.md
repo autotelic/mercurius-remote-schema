@@ -54,11 +54,35 @@ mercurius-remote-schema accepts the following *optional* configuration:
  - #### `stitchSchemaOpts`
    - Options object to be passed to [stitchSchemas](https://www.graphql-tools.com/docs/stitch-api#stitchschemas)
 
-### Decorator `addRemoteSchemas`
+ - #### `pollingInterval`
+   - The interval (in milliseconds) in which service should poll the remote services to refresh its schema. If left undefined there will be no automated refresh behavior
+   configured unless the `autoRefreshRemoteSchemas` decorator is used.
+
+### `Decorators`
+
+*Note* All decorators are added to the `graphql` namespace.
+
+#### `addRemoteSchemas`
 
 `mercurius-remote-schema` adds a `fastify.graphql.addRemoteSchemas` decorator to allow
-adding additional remote schemas after plugin initialization. It accepts the following
-arguments.
+adding additional remote schemas after plugin initialization.
 
-- #### `subschemas`:
-  - An array of subschema configuration objects.
+It accepts the following arguments:
+
+- `subschemas`: An array of subschema configuration objects.
+
+#### `refreshRemoteSchemas`
+
+May be invoked to trigger a refetch of all registered remote schemas and re-stitch the service schema.
+
+#### `autoRefreshRemoteSchemas`
+
+Used to enable automatic polling and refreshing of remote schemas.
+
+It accepts the following arguments:
+
+- `interval`: The polling interval (in milliseconds)
+
+#### `stopAutoRefreshRemoteSchemas`
+
+Used to stop the automated remote schema refresh behavior.
