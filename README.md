@@ -43,7 +43,7 @@ mercurius-remote-schema accepts the following *optional* configuration:
 
  - #### `subschemas`
 
-   - An array of subschema [configuration objects](https://www.graphql-tools.com/docs/remote-schemas#wrapschemaschemaconfig)
+   - An array of subschema [configuration objects](https://www.graphql-tools.com/docs/stitch-combining-schemas#subschema-configs)
 
       | field | description | required |
       |-------|-------------|----------|
@@ -57,6 +57,10 @@ mercurius-remote-schema accepts the following *optional* configuration:
  - #### `pollingInterval`
    - The interval (in milliseconds) in which service should poll the remote services to refresh its schema. If left undefined there will be no automated refresh behavior
    configured unless the `autoRefreshRemoteSchemas` decorator is used.
+
+ - #### `localSubschemaOpts`
+   - A subschema [configuration object](https://www.graphql-tools.com/docs/stitch-combining-schemas#subschema-configs). Note `schema` is pre-configured and will not
+   be overridden.
 
 ### `Decorators`
 

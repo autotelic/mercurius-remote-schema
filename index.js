@@ -13,6 +13,7 @@ async function mercuriusRemoteSchema (fastify, options) {
   const {
     pollingInterval = null,
     stitchSchemaOpts = {},
+    localSubschemaOpts = {},
     subschemas = []
   } = options
 
@@ -32,9 +33,14 @@ async function mercuriusRemoteSchema (fastify, options) {
   async function buildSchema () {
     const subschemas = await Promise.all(remoteSubschemas.map(createSubschema))
 
+    const localSubschema = {
+      ...localSubschemaOpts,
+      schema: baseServiceSchema
+    }
+
     replaceSchema(stitchSchemas({
       ...stitchSchemaOpts,
-      subschemas: [...subschemas, baseServiceSchema]
+      subschemas: [...subschemas, localSubschema]
     }))
   }
 

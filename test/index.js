@@ -154,6 +154,44 @@ test('"plugin" - Supports transforms at the subschema level', async (t) => {
   t.same(actual, expected)
 })
 
+test('"plugin" - Allows local subschema configuration through plugin option "localSubschemaOpts"', async (t) => {
+  const [remoteService, remoteServicePort] = await createRemoteService()
+  t.teardown(async () => {
+    await remoteService.close()
+    await gql.close()
+  })
+  const executor = createTestExecutor(remoteServicePort)
+
+  const gql = createBaseGQLService()
+
+  const localSubschemaOpts = {
+    transforms: [
+      new RenameRootFields((operationName, fieldName, fieldConfig) => `local_${fieldName}`)
+    ]
+  }
+
+  gql.register(plugin, {
+    subschemas: [{ executor }],
+    localSubschemaOpts
+  })
+
+  await gql.ready()
+
+  const actual = await gql.inject.query(`{
+    add(x: 1, y: 3)
+    local_subtract(x: 4, y: 2)
+  }`)
+
+  const expected = {
+    data: {
+      add: 4,
+      local_subtract: 2
+    }
+  }
+
+  t.same(actual, expected)
+})
+
 test('"refreshRemoteSchemas" refreshes the remote schemas', async (t) => {
   const [remoteService, remoteServicePort] = await createRemoteService()
   t.teardown(async () => {
