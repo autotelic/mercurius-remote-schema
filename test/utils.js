@@ -29,19 +29,44 @@ const testResolvers2 = {
   }
 }
 
-async function createRemoteService (schema = testSchema, resolvers = testResolvers, port = 0) {
+async function createRemoteService (schema = testSchema, resolvers = testResolvers, port = 0, opts = {}) {
   const service = Fastify()
 
   service.register(mercurius, {
     schema,
-    resolvers
+    resolvers,
+    ...opts
   })
 
   await service.listen(port)
   return [service, service.server.address().port]
 }
 
-function createBaseGQLService (schema = testSchema2, resolvers = testResolvers2) {
+async function createGatewayService (services, port = 0) {
+  const service = Fastify()
+
+  service.register(mercurius, {
+    gateway: { services },
+    graphiql: 'playground'
+  })
+
+  service.inject.query = async (query) => {
+    const res = await service.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    })
+
+    return res.json()
+  }
+
+  await service.listen(port)
+
+  return [service, service.server.address().port]
+}
+
+function createBaseGQLService (schema = testSchema2, resolvers = testResolvers2, opts = {}) {
   const service = Fastify()
 
   service.inject.query = async (query) => {
@@ -57,7 +82,8 @@ function createBaseGQLService (schema = testSchema2, resolvers = testResolvers2)
 
   service.register(mercurius, {
     schema,
-    resolvers
+    resolvers,
+    ...opts
   })
 
   return service
@@ -84,6 +110,7 @@ function sleep (ms) {
 
 module.exports = {
   sleep,
+  createGatewayService,
   createRemoteService,
   createBaseGQLService,
   createTestExecutor
