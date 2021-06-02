@@ -3,18 +3,22 @@
 const fp = require('fastify-plugin')
 const { introspectSchema } = require('@graphql-tools/wrap')
 const { stitchSchemas } = require('@graphql-tools/stitch')
+const { buildFederationSchema } = require('mercurius')
+const { printSDL } = require('@autotelic/graphql-schema-tools')
 
 async function mercuriusRemoteSchema (fastify, options) {
   const {
     schema: baseServiceSchema,
-    replaceSchema
+    replaceSchema,
+    defineResolvers
   } = fastify.graphql
 
   const {
     pollingInterval = null,
     stitchSchemaOpts = {},
     localSubschemaOpts = {},
-    subschemas = []
+    subschemas = [],
+    federationMetadata
   } = options
 
   const remoteSubschemas = subschemas
@@ -38,10 +42,45 @@ async function mercuriusRemoteSchema (fastify, options) {
       schema: baseServiceSchema
     }
 
-    replaceSchema(stitchSchemas({
+    const stitchedSchemas = stitchSchemas({
       ...stitchSchemaOpts,
+      mergeDirectives: true,
       subschemas: [...subschemas, localSubschema]
-    }))
+    })
+
+    if (federationMetadata) {
+      const SDL = printSDL(stitchedSchemas, {
+        filterDirectives: [
+          'external',
+          'requires',
+          'provides',
+          'key',
+          'extends'
+        ],
+        filterTypes: [
+          '_Any',
+          '_FieldSet',
+          '_Service'
+        ],
+        filterFields: {
+          Query: ['_service', '_entities']
+        }
+      })
+
+      const federatedSchema = buildFederationSchema(SDL)
+
+      const { _entities, _service } = federatedSchema.getType('Query').getFields()
+
+      const federatedResolvers = {}
+      /* istanbul ignore next */
+      if (_service && _service.resolve) { federatedResolvers._service = _service.resolve }
+      if (_entities && _entities.resolve) { federatedResolvers._entities = _entities.resolve }
+
+      replaceSchema(stitchedSchemas)
+      defineResolvers({ Query: federatedResolvers })
+    } else {
+      replaceSchema(stitchedSchemas)
+    }
   }
 
   async function addRemoteSchemas (subschemaConfigs) {
