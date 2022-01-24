@@ -40,7 +40,7 @@
     "fastify-cli": "^2.5.1",
     "got": "^11.8.2",
     "graphql": "^15.5.0",
-    "lint-staged": "^11.0.0",
+    "lint-staged": "^12.3.1",
     "mercurius": "^8.0.0",
     "standard": "^16.0.3",
     "tap": "^15.0.6"
