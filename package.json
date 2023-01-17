@@ -31,7 +31,7 @@
   "homepage": "https://github.com/autotelic/mercurius-remote-schema#readme",
   "dependencies": {
     "@autotelic/graphql-schema-tools": "^0.3.0",
-    "@graphql-tools/stitch": "^7.5.2",
+    "@graphql-tools/stitch": "^8.7.36",
     "@graphql-tools/wrap": "^7.0.8",
     "fastify-plugin": "^3.0.0"
   },
